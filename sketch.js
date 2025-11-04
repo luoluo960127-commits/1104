@@ -55,17 +55,17 @@ function windowResized() {
   createButtons(height * 0.48);
 }
 
-function createButtons() {
-  const buttonWidth = 400;
-  const buttonHeight = 70;
-  const startX = width/2 - buttonWidth/2;
-  
+function createButtons(startY = 380) {
+  const buttonWidth = 700;
+  const buttonHeight = 64;     // 微調按鈕高度
+  const startX = width / 2 - buttonWidth / 2;
+  const gap = 70;              // 縮短按鈕之間間距（從 100 -> 70）
+
   buttons = [];
   let options = ['A', 'B', 'C', 'D'];
-  
-  for(let i = 0; i < 4; i++) {
-    // 將按鈕位置往下調整一些
-    let y = 450 + i * 90;
+
+  for (let i = 0; i < 4; i++) {
+    let y = startY + i * gap;
     buttons.push({
       x: startX,
       y: y,
@@ -88,16 +88,46 @@ function draw() {
     textSize(42); // 放大題目文字
     text(selectedQuestions[currentQuestion].question, width/2, 250);
     
-    // 繪製按鈕
-    for(let i = 0; i < buttons.length; i++) {
+    // 根據題目底部動態決定按鈕起始 Y，避免重疊
+    let qY = 250;
+    let qH = 42;
+    let buttonsStartY = qY + qH + 12; // 縮短題目與選項間距
+
+    createButtons(buttonsStartY);
+
+    // 繪製按鈕（按鈕半透明，並加入高亮）
+    for (let i = 0; i < buttons.length; i++) {
       let b = buttons[i];
-      fill(mouseIsOverButton(b) ? color(100) : 70);
-      stroke(255);
-      rect(b.x, b.y, b.width, b.height, 15); // 圓角按鈕
-      fill(255);
+      push();
+      let hover = mouseIsOverButton(b);
+      fill(hover ? color(255, 220) : color(255, 180), 220);
+      stroke(255, 200);
+      strokeWeight(2);
+      rect(b.x, b.y, b.width, b.height, 18);
       noStroke();
-      textSize(32); // 放大選項文字
-      text(selectedQuestions[currentQuestion].options[i], b.x + b.width/2, b.y + b.height/2);
+      textSize(28);
+      textAlign(CENTER, CENTER);
+      let optionText = selectedQuestions.length > 0 ? selectedQuestions[currentQuestion].options[i] : '';
+      let maxTextWidth = b.width - 40;
+      textSize(28);
+      if (textWidth(optionText) > maxTextWidth) {
+        let scale = maxTextWidth / textWidth(optionText);
+        textSize(28 * scale);
+      }
+      fill(0, 160);
+      text(optionText, b.x + b.width/2 + 2, b.y + b.height/2 + 2);
+      fill(10);
+      text(optionText, b.x + b.width/2, b.y + b.height/2);
+      pop();
+    }
+
+    // 回饋文字放在按鈕上方（相對位置也縮短）
+    if (feedback) {
+      textSize(32);
+      fill(255);
+      textAlign(CENTER, CENTER);
+      let feedbackY = buttonsStartY - 20;
+      text(feedback, width / 2, feedbackY);
     }
   } else if (gameState === 'finished') {
     // 顯示結果
@@ -122,14 +152,6 @@ function draw() {
     if (fireworks[i].done()) {
       fireworks.splice(i, 1);
     }
-  }
-  
-  // 顯示回饋
-  if (feedback) {
-    textSize(42);
-    fill(255);
-    // 將回饋文字位置調整到選項上方
-    text(feedback, width/2, 350);
   }
 }
 
